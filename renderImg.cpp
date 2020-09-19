@@ -8,6 +8,7 @@ int main() {
     cout << "P3\n" << imgwidth << ' ' << imgheight << "\n255\n";
 
     for (int i = 0; i < imgheight; i++) {
+        cerr << "\r" << (imgheight - i) << " lines remaining." << flush;
         for (int j = 0; j < imgwidth; j++) {
             auto r = double(i) / (imgheight-1);
             auto g = 0.25;
@@ -21,4 +22,5 @@ int main() {
         }
         cout << "\n";
     }
+    cerr << "\nDone." << endl;
 }
