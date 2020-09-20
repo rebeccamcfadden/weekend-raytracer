@@ -6,28 +6,6 @@
 
 using namespace std;
 
-double hit_sphere(const pt3 &center, double radius, const ray &r) {
-  // GENERAL IDEA:
-  // (p - center) dot (p - center) = rad^2
-  // p = r.origin + t*r.direction
-  // quadratic formula : x = (-b +/- sqrt(b^2 - 4ac))/2a
-  // discriminant : b^2 - 4ac
-  // a = r.direction dot r.direction
-  // b = 2 * (r.direction dot (r.origin - center))
-  // c = (r.origin - center) dot (r.origin - center) - rad ^2
-
-  vec3 oc = r.origin() - center;  // origin - center
-  double a = r.direction().dot(r.direction());
-  double b = 2.0 * oc.dot(r.direction());
-  double c = oc.dot(oc) - radius * radius;
-  double discriminant = b * b - 4 * a * c;
-  if (discriminant < 0) {
-    return -1.0;
-  } else {
-    return (-b - sqrt(discriminant)) / (2.0 * a);
-  }
-}
-
 color ray_color(const ray &r) {
   pt3 center = pt3(0, 0, -1);
   double collision_pt = hit_sphere(center, 1, r);
