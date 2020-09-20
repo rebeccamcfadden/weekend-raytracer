@@ -7,7 +7,7 @@
 class sphere : public hittable {
  public:
   sphere() {}
-  sphere(pt3 cen, double rad) : center(center), radius(rad){};
+  sphere(pt3 cen, double rad) : center(cen), radius(rad){};
   virtual bool is_hit(const ray& r, double tmin, double tmax,
                       hit& rec) const override;
 
@@ -25,7 +25,7 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
   // a = r.direction dot r.direction
   // b = 2 * (r.direction dot (r.origin - center))
   // c = (r.origin - center) dot (r.origin - center) - rad ^2
-
+  
   vec3 oc = r.origin() - center;  // origin - center
   double a = r.direction().length_sq();
   double b = oc.dot(r.direction());
@@ -41,15 +41,17 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
       rec.p = r.at(rec.t);
       vec3 normal = (rec.p - center) / radius;
       rec.set_outward_normal(r, normal); 
+      // cerr << "HIT: object with center " << center << endl;
       return true;
     }
 
-    double t = (-b + root) / a;
+    t = (-b + root) / a;
     if (t < tmax && t > tmin) {
       rec.t = t;
       rec.p = r.at(rec.t);
       vec3 normal = (rec.p - center) / radius;
       rec.set_outward_normal(r, normal); 
+      // cerr << "HIT: object with center " << center << endl;
       return true;
     }
   }

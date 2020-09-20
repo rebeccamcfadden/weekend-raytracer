@@ -1,17 +1,14 @@
 #include <iostream>
 
+#include "raytracer.h"
 #include "color.h"
-#include "ray.h"
-#include "vec3.h"
+#include "hittable_list.h"
+#include "sphere.h"
 
-using namespace std;
-
-color ray_color(const ray &r) {
-  pt3 center = pt3(0, 0, -1);
-  double collision_pt = hit_sphere(center, 1, r);
-  if (collision_pt > 0.0) {
-    vec3 N = unit(r.at(collision_pt) - center);
-    return 0.5 * color(N.x() + 1, N.y() + 1, N.z() + 1);
+color ray_color(const ray &r, const hittable& world) {
+  hit rec;
+  if (world.is_hit(r, 0, infinity, rec)) {
+    return 0.5 * (rec.N + color(1, 1, 1));
   }
   vec3 unit_dir = unit(r.direction());
   double t = 0.5 * (unit_dir.y() + 1.0);
@@ -23,6 +20,11 @@ int main() {
   const double aspect_ratio = 16.0 / 9.0;
   const int imgwidth = 800;
   const int imgheight = static_cast<int>(imgwidth / aspect_ratio);
+
+  // World
+  hittable_list world;
+  world.add(make_shared<sphere>(pt3(0, 0, -1), 0.5));
+  world.add(make_shared<sphere>(pt3(0, -100.5, -1), 100));
 
   // Camera location
   double view_height = 2.0;
@@ -46,7 +48,7 @@ int main() {
       double v = double(j) / (imgheight - 1);
       ray r(origin, lower_left + u * horizontal + v * vertical - origin);
 
-      color pixel = ray_color(r);
+      color pixel = ray_color(r, world);
       cout << get_rgb(pixel) << '\t';
     }
     cout << "\n";
