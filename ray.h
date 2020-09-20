@@ -13,7 +13,7 @@ class ray {
 
   pt3 at(double t) const { return orig + (t * dir); }
 
- public:
+ private:
   pt3 orig;
   vec3 dir;
 };
