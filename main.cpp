@@ -6,7 +6,7 @@
 
 using namespace std;
 
-bool hit_sphere(const pt3 &center, double radius, const ray &r) {
+double hit_sphere(const pt3 &center, double radius, const ray &r) {
   // GENERAL IDEA:
   // (p - center) dot (p - center) = rad^2
   // p = r.origin + t*r.direction
@@ -21,12 +21,19 @@ bool hit_sphere(const pt3 &center, double radius, const ray &r) {
   double b = 2.0 * oc.dot(r.direction());
   double c = oc.dot(oc) - radius * radius;
   double discriminant = b * b - 4 * a * c;
-  return (discriminant > 0);
+  if (discriminant < 0) {
+    return -1.0;
+  } else {
+    return (-b - sqrt(discriminant)) / (2.0 * a);
+  }
 }
 
 color ray_color(const ray &r) {
-  if (hit_sphere(pt3(0, 0, -1), 1, r)) {
-    return color(1, 0, 0);
+  pt3 center = pt3(0, 0, -1);
+  double collision_pt = hit_sphere(center, 1, r);
+  if (collision_pt > 0.0) {
+    vec3 N = unit(r.at(collision_pt) - center);
+    return 0.5 * color(N.x() + 1, N.y() + 1, N.z() + 1);
   }
   vec3 unit_dir = unit(r.direction());
   double t = 0.5 * (unit_dir.y() + 1.0);
@@ -36,7 +43,7 @@ color ray_color(const ray &r) {
 int main() {
   // Image dimensions
   const double aspect_ratio = 16.0 / 9.0;
-  const int imgwidth = 400;
+  const int imgwidth = 800;
   const int imgheight = static_cast<int>(imgwidth / aspect_ratio);
 
   // Camera location
