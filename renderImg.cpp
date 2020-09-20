@@ -1,4 +1,8 @@
 #include <iostream>
+
+#include "color.h"
+#include "vec3.h"
+
 using namespace std;
 
 int main() {
@@ -10,15 +14,8 @@ int main() {
     for (int i = 0; i < imgheight; i++) {
         cerr << "\r" << (imgheight - i) << " lines remaining." << flush;
         for (int j = 0; j < imgwidth; j++) {
-            auto r = double(i) / (imgheight-1);
-            auto g = 0.25;
-            auto b = double(j) / (imgwidth-1);
-
-            int ir = static_cast<int>(255.99 * r);
-            int ig = static_cast<int>(255.99 * g);
-            int ib = static_cast<int>(255.99 * b);
-
-            cout << ir << ' ' << ig << ' ' << ib << '\t';
+            color pixel(double(i) / (imgheight-1), 0.25, double(j) / (imgwidth - 1));
+            cout << get_rgb(pixel) << '\t';
         }
         cout << "\n";
     }
