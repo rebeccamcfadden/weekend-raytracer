@@ -55,7 +55,18 @@ class vec3 {
                 -((data[0] * v[2]) - (data[2] * v[0])),
                 (data[0] * v[1]) - (data[1] * v[0]));
   }
-  friend ostream& operator<<(ostream& os, vec3 &v);
+
+  // random direction helpers
+  inline static vec3 random() {
+    return vec3(random_double(), random_double(), random_double());
+  }
+
+  inline static vec3 random(double min, double max) {
+    return vec3(random_double(min, max), random_double(min, max),
+                random_double(min, max));
+  }
+
+  friend ostream &operator<<(ostream &os, vec3 &v);
 
  private:
   double data[3];
@@ -92,8 +103,23 @@ inline vec3 operator*(const vec3 &u, const double t) { return t * u; }
 inline vec3 operator/(const vec3 &u, const double t) { return (1 / t) * u; }
 
 // unit vector
-inline vec3 unit(const vec3 &u) {
-    return u / u.length();
+inline vec3 unit(const vec3 &u) { return u / u.length(); }
+
+// get random vector in unit sphere
+vec3 random_in_unit_sphere() {
+  while (true) {
+    vec3 p = vec3::random(-1, 1);
+    if (p.length_sq() >= 1) continue;
+    return p;
+  }
+}
+
+// get random vector in unit sphere
+vec3 random_unit_vector() {
+  auto a = random_double(0, 2 * pi);
+  auto z = random_double(-1, 1);
+  auto r = sqrt(1 - z * z);
+  return vec3(r * cos(a), r * sin(a), z);
 }
 
 #endif

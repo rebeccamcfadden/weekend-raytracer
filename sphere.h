@@ -27,15 +27,15 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
   // c = (r.origin - center) dot (r.origin - center) - rad ^2
   
   vec3 oc = r.origin() - center;  // origin - center
-  double a = r.direction().length_sq();
-  double b = oc.dot(r.direction());
-  double c = oc.length_sq() - radius * radius;
-  double discriminant = b * b - a * c;
+  auto a = r.direction().length_sq();
+  auto b = oc.dot(r.direction());
+  auto c = oc.length_sq() - radius * radius;
+  auto discriminant = (b * b) - (a * c);
 
   if (discriminant > 0) {
-    double root = sqrt(discriminant);
+    auto root = sqrt(discriminant);
 
-    double t = (-b - root) / a;
+    auto t = (-b - root) / a;
     if (t < tmax && t > tmin) {
       rec.t = t;
       rec.p = r.at(rec.t);
