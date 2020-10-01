@@ -1,11 +1,15 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
+#include "raytracer.h"
 #include "ray.h"
+
+class material;
 
 struct hit {
     pt3 p;
     vec3 N;
+    shared_ptr<material> mat_ptr;
     double t;
 
     bool front;

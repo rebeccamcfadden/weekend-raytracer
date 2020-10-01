@@ -45,7 +45,7 @@ class vec3 {
     return (data[0] * data[0]) + (data[1] * data[1]) + (data[2] * data[2]);
   }
   // dot product
-  inline double dot(const vec3 &v) {
+  inline double dot(const vec3 &v) const {
     return (data[0] * v[0]) + (data[1] * v[1]) + (data[2] * v[2]);
   }
 
@@ -121,5 +121,7 @@ vec3 random_unit_vector() {
   auto r = sqrt(1 - z * z);
   return vec3(r * cos(a), r * sin(a), z);
 }
+
+vec3 reflect(const vec3 &v, const vec3 &n) { return v - 2 * v.dot(n) * n; }
 
 #endif

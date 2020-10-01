@@ -1,9 +1,10 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 #include "camera.h"
 #include "color.h"
 #include "hittable_list.h"
+#include "material.h"
 #include "raytracer.h"
 #include "sphere.h"
 
@@ -17,8 +18,12 @@ color ray_color(const ray& r, const hittable& world, int depth) {
   }
 
   if (world.is_hit(r, 0.001, infinity, rec)) {
-    pt3 target = rec.p + rec.N + random_unit_vector();
-    return 0.5 * ray_color(ray(rec.p, target - rec.p), world, depth-1);
+    ray scattered;
+    color attenuation;
+    if (rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
+      return attenuation * ray_color(scattered, world, depth - 1);
+    }
+    return color(0, 0, 0);
   }
 
   vec3 unit_dir = unit(r.direction());
@@ -35,14 +40,22 @@ int main() {
 
   // World
   hittable_list world;
-  world.add(make_shared<sphere>(pt3(0, 0, -1), 0.5));
-  world.add(make_shared<sphere>(pt3(0, -100.50, -1), 100));
+
+  auto material_ground = make_shared<diffuse>(color(0.8, 0.8, 0.0));
+  auto material_center = make_shared<diffuse>(color(0.5, 0.3, 1.0));
+  auto material_left = make_shared<metal>(color(0.8, 0.8, 0.8), 0.1);
+  auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 0.8);
+
+  world.add(make_shared<sphere>(pt3(0.0, -100.5, -1.0), 100.0, material_ground));
+  world.add(make_shared<sphere>(pt3(0.0, 0.0, -1.0), 0.5, material_center));
+  world.add(make_shared<sphere>(pt3(-1.0, 0.0, -1.0), 0.5, material_left));
+  world.add(make_shared<sphere>(pt3(1.0, 0.0, -1.0), 0.5, material_right));
 
   camera cam;
 
   // Render
   ofstream image;
-  image.open ("example.ppm");
+  image.open("example.ppm");
   image << "P3\n" << imgwidth << ' ' << imgheight << "\n255\n";
   // cout << "P3\n" << imgwidth << ' ' << imgheight << "\n255\n";
   // u vector is x dir

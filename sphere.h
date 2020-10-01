@@ -7,13 +7,15 @@
 class sphere : public hittable {
  public:
   sphere() {}
-  sphere(pt3 cen, double rad) : center(cen), radius(rad){};
+  sphere(pt3 cen, double rad, shared_ptr<material> m)
+      : center(cen), radius(rad), mat_ptr(m){};
   virtual bool is_hit(const ray& r, double tmin, double tmax,
                       hit& rec) const override;
 
  public:
   pt3 center;
   double radius;
+  shared_ptr<material> mat_ptr;
 };
 
 bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
@@ -25,7 +27,7 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
   // a = r.direction dot r.direction
   // b = 2 * (r.direction dot (r.origin - center))
   // c = (r.origin - center) dot (r.origin - center) - rad ^2
-  
+
   vec3 oc = r.origin() - center;  // origin - center
   auto a = r.direction().length_sq();
   auto b = oc.dot(r.direction());
@@ -40,7 +42,8 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
       rec.t = t;
       rec.p = r.at(rec.t);
       vec3 normal = (rec.p - center) / radius;
-      rec.set_outward_normal(r, normal); 
+      rec.set_outward_normal(r, normal);
+      rec.mat_ptr = mat_ptr;
       // cerr << "HIT: object with center " << center << endl;
       return true;
     }
@@ -50,7 +53,8 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
       rec.t = t;
       rec.p = r.at(rec.t);
       vec3 normal = (rec.p - center) / radius;
-      rec.set_outward_normal(r, normal); 
+      rec.set_outward_normal(r, normal);
+      rec.mat_ptr = mat_ptr;
       // cerr << "HIT: object with center " << center << endl;
       return true;
     }
