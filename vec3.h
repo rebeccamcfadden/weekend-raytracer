@@ -124,4 +124,11 @@ vec3 random_unit_vector() {
 
 vec3 reflect(const vec3 &v, const vec3 &n) { return v - 2 * v.dot(n) * n; }
 
+vec3 refract(const vec3& v, const vec3& n, double refract_ratio) {
+  auto cos_theta = (-v).dot(n);
+  vec3 r_perp = refract_ratio * (v + cos_theta * n);
+  vec3 r_parallel = -sqrt(fabs(1.0 - r_perp.length_sq())) * n;
+  return r_parallel + r_perp;
+}
+
 #endif

@@ -43,4 +43,41 @@ class metal : public material {
   double fuzz;
 };
 
+class refractor : public material {
+ public:
+  refractor(double ri) : ref_ind(ri) {}
+
+  virtual bool scatter(const ray& r, const hit& rec, color& attenuation,
+                       ray& scattered) const override {
+    attenuation = color(1.0, 1.0, 1.0);
+    double refract_ratio = rec.front ? (1.0 / ref_ind) : ref_ind;
+
+    vec3 unit_dir = unit(r.direction());
+    double cos_theta = fmin(-unit_dir.dot(rec.N), 1.0);
+    double sin_theta = sqrt(1.0 - (cos_theta * cos_theta));
+
+    vec3 direction;
+    if (refract_ratio * sin_theta > 1.0 || reflectance(cos_theta, refract_ratio) > random_double()) {
+      // Reflect
+      direction = reflect(unit_dir, rec.N);
+    } else {
+      // Refract
+      direction = refract(unit_dir, rec.N, refract_ratio);
+    }
+    scattered = ray(rec.p, direction);
+    return true;
+  }
+
+ public:
+  double ref_ind;
+
+ private:
+  static double reflectance(double cosine, double ref_ind) {
+    // Schlick's approx
+    auto r0 = (1 - ref_ind) / (1 + ref_ind);
+    r0 = r0*r0;
+    return r0 + (1-r0)*pow((1 - cosine), 5);
+  }
+};
+
 #endif
