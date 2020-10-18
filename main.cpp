@@ -1,5 +1,7 @@
 #include <fstream>
 #include <iostream>
+#include <mutex>
+#include <thread>
 
 #include "camera.h"
 #include "color.h"
@@ -77,21 +79,78 @@ hittable_list random_scene() {
   return world;
 }
 
+hittable_list test() {
+  hittable_list world;
+
+  auto ground_material = make_shared<diffuse>(color(0.5, 0.5, 0.5));
+  world.add(make_shared<sphere>(pt3(0, -1000, 0), 1000, ground_material));
+
+  auto material1 = make_shared<refractor>(1.5);
+  world.add(make_shared<sphere>(pt3(0, 1, 0), 1.0, material1));
+
+  auto material2 = make_shared<diffuse>(color(0.4, 0.2, 0.1));
+  world.add(make_shared<sphere>(pt3(-4, 1, 0), 1.0, material2));
+
+  auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
+  world.add(make_shared<sphere>(pt3(4, 1, 0), 1.0, material3));
+
+  return world;
+}
+
+void raytrace(int* startX, int* startY, int tilewidth, int tileheight,
+              int imgwidth, int imgheight, int spp, hittable_list world,
+              camera cam, mutex* tileMutex, color* buffer) {
+  while (true) {
+    tileMutex->lock();
+    int tileX = *startX;
+    int tileY = *startY;
+
+    *startX += tilewidth;
+    if (*startX >= imgwidth) {
+      *startX = 0;
+      *startY += tileheight;
+    }
+    cerr << "\r" << "Starting tile: (" << tileX << ", " << tileY << ")" << flush;
+    tileMutex->unlock();
+
+    if (tileY >= imgheight) {
+      return;
+    }
+
+    tilewidth = tilewidth - max(0, tileX + tilewidth - imgwidth);
+    tileheight = tileheight - max(0, tileY + tileheight - imgheight);
+
+    for (int j = tileY + tileheight - 1; j >= tileY; j--) {
+      // cerr << "\r" << j << " lines remaining." << flush;
+      for (int i = tileX; i < tileX + tilewidth; i++) {
+        color pixel(0, 0, 0);
+        for (int s = 0; s < spp; s++) {
+          double u = (double(i) + random_double()) / (imgwidth - 1);
+          double v = (double(j) + random_double()) / (imgheight - 1);
+          ray r = cam.get_ray(u, v);
+          pixel += ray_color(r, world, MAX_DEPTH);
+        }
+        // write_color(image, pixel, samples_per_pixel);
+
+        int bufInd = (i + j * imgwidth);
+        buffer[bufInd] = pixel;
+      }
+    }
+  }
+}
+
 int main() {
   // Image
-
   const auto aspect_ratio = 3.0 / 2.0;
   const int imgwidth = 1200;
   const int imgheight = static_cast<int>(imgwidth / aspect_ratio);
-  const int samples_per_pixel = 500;
+  const int samples_per_pixel = 10;
   const int max_depth = 50;
 
   // World
-
   auto world = random_scene();
 
   // Camera
-
   pt3 lookfrom(13, 2, 3);
   pt3 lookat(0, 0, 0);
   vec3 vup(0, 1, 0);
@@ -100,26 +159,38 @@ int main() {
 
   camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus);
 
-  // Render
+  // Thread Info
+  color* buffer = new color[imgwidth * imgheight];
+  int tileWidth = 32;
+  int tileHeight = 32;
+  int startX = 0;
+  int startY = 0;
+  mutex tileMutex;
+  unsigned int numThreads = max(1, (int)thread::hardware_concurrency());
+
+  std::thread* threads = new std::thread[numThreads];
+
+  for (int i = 0; i < numThreads; i++) {
+    threads[i] = thread(raytrace, &startX, &startY, tileWidth, tileHeight, imgwidth, imgheight, samples_per_pixel, world, cam, &tileMutex, buffer);
+  }
+
+  for (int i = 0; i < numThreads; i++) {
+    threads[i].join();
+  }
+
+  // Render Output
   ofstream image;
   image.open("example.ppm");
   image << "P3\n" << imgwidth << ' ' << imgheight << "\n255\n";
-  // cout << "P3\n" << imgwidth << ' ' << imgheight << "\n255\n";
-  // u vector is x dir
-  // v vector is y dir
-  // to draw from top left, have to go off u = 0, v = imgheight
-  for (int j = imgheight - 1; j >= 0; j--) {
+  for (int j = imgheight - 1; j >=0; j--) {
     cerr << "\r" << j << " lines remaining." << flush;
     for (int i = 0; i < imgwidth; i++) {
-      color pixel(0, 0, 0);
-      for (int s = 0; s < samples_per_pixel; s++) {
-        double u = (double(i) + random_double()) / (imgwidth - 1);
-        double v = (double(j) + random_double()) / (imgheight - 1);
-        ray r = cam.get_ray(u, v);
-        pixel += ray_color(r, world, MAX_DEPTH);
-      }
+      color pixel = buffer[i + (j * imgwidth)]; 
       write_color(image, pixel, samples_per_pixel);
     }
   }
+
   cerr << "\nDone." << endl;
 }
+
+// TODO - clean up snake, camel, case structure
