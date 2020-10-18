@@ -9,7 +9,7 @@ class material;
 struct hit {
     pt3 p;
     vec3 N;
-    shared_ptr<material> mat_ptr;
+    shared_ptr<material> matPtr;
     double t;
 
     bool front;

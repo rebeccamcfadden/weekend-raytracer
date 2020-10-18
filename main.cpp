@@ -10,7 +10,7 @@
 #include "raytracer.h"
 #include "sphere.h"
 
-#define MAX_DEPTH 25
+#define MAX_DEPTH 50
 
 color ray_color(const ray& r, const hittable& world, int depth) {
   hit rec;
@@ -22,46 +22,46 @@ color ray_color(const ray& r, const hittable& world, int depth) {
   if (world.is_hit(r, 0.001, infinity, rec)) {
     ray scattered;
     color attenuation;
-    if (rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
+    if (rec.matPtr->scatter(r, rec, attenuation, scattered)) {
       return attenuation * ray_color(scattered, world, depth - 1);
     }
     return color(0, 0, 0);
   }
 
-  vec3 unit_dir = unit(r.direction());
-  double t = 0.5 * (unit_dir.y() + 1.0);
+  vec3 unitDir = unit(r.direction());
+  double t = 0.5 * (unitDir.y() + 1.0);
   return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0);
 }
 
 hittable_list random_scene() {
   hittable_list world;
 
-  auto ground_material = make_shared<diffuse>(color(0.5, 0.5, 0.5));
-  world.add(make_shared<sphere>(pt3(0, -1000, 0), 1000, ground_material));
+  auto groundMaterial = make_shared<diffuse>(color(0.5, 0.5, 0.5));
+  world.add(make_shared<sphere>(pt3(0, -1000, 0), 1000, groundMaterial));
 
   for (int a = -11; a < 11; a++) {
     for (int b = -11; b < 11; b++) {
-      auto choose_mat = random_double();
+      auto chooseMat = random_double();
       pt3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
 
       if ((center - pt3(4, 0.2, 0)).length() > 0.9) {
-        shared_ptr<material> sphere_material;
+        shared_ptr<material> sphereMaterial;
 
-        if (choose_mat < 0.8) {
+        if (chooseMat < 0.8) {
           // diffuse
           auto albedo = color::random() * color::random();
-          sphere_material = make_shared<diffuse>(albedo);
-          world.add(make_shared<sphere>(center, 0.2, sphere_material));
-        } else if (choose_mat < 0.95) {
+          sphereMaterial = make_shared<diffuse>(albedo);
+          world.add(make_shared<sphere>(center, 0.2, sphereMaterial));
+        } else if (chooseMat < 0.95) {
           // metal
           auto albedo = color::random(0.5, 1);
           auto fuzz = random_double(0, 0.5);
-          sphere_material = make_shared<metal>(albedo, fuzz);
-          world.add(make_shared<sphere>(center, 0.2, sphere_material));
+          sphereMaterial = make_shared<metal>(albedo, fuzz);
+          world.add(make_shared<sphere>(center, 0.2, sphereMaterial));
         } else {
           // glass
-          sphere_material = make_shared<refractor>(1.5);
-          world.add(make_shared<sphere>(center, 0.2, sphere_material));
+          sphereMaterial = make_shared<refractor>(1.5);
+          world.add(make_shared<sphere>(center, 0.2, sphereMaterial));
         }
       }
     }
@@ -82,8 +82,8 @@ hittable_list random_scene() {
 hittable_list test() {
   hittable_list world;
 
-  auto ground_material = make_shared<diffuse>(color(0.5, 0.5, 0.5));
-  world.add(make_shared<sphere>(pt3(0, -1000, 0), 1000, ground_material));
+  auto groundMaterial = make_shared<diffuse>(color(0.5, 0.5, 0.5));
+  world.add(make_shared<sphere>(pt3(0, -1000, 0), 1000, groundMaterial));
 
   auto material1 = make_shared<refractor>(1.5);
   world.add(make_shared<sphere>(pt3(0, 1, 0), 1.0, material1));
@@ -97,42 +97,41 @@ hittable_list test() {
   return world;
 }
 
-void raytrace(int* startX, int* startY, int tilewidth, int tileheight,
-              int imgwidth, int imgheight, int spp, hittable_list world,
+void raytrace(int* startX, int* startY, int tileWidth, int tileHeight,
+              int imgWidth, int imgHeight, int spp, hittable_list world,
               camera cam, mutex* tileMutex, color* buffer) {
   while (true) {
     tileMutex->lock();
     int tileX = *startX;
     int tileY = *startY;
 
-    *startX += tilewidth;
-    if (*startX >= imgwidth) {
+    *startX += tileWidth;
+    if (*startX >= imgWidth) {
       *startX = 0;
-      *startY += tileheight;
+      *startY += tileHeight;
     }
     cerr << "\r" << "Starting tile: (" << tileX << ", " << tileY << ")" << flush;
     tileMutex->unlock();
 
-    if (tileY >= imgheight) {
+    if (tileY >= imgHeight) {
       return;
     }
 
-    tilewidth = tilewidth - max(0, tileX + tilewidth - imgwidth);
-    tileheight = tileheight - max(0, tileY + tileheight - imgheight);
+    tileWidth = tileWidth - max(0, tileX + tileWidth - imgWidth);
+    tileHeight = tileHeight - max(0, tileY + tileHeight - imgHeight);
 
-    for (int j = tileY + tileheight - 1; j >= tileY; j--) {
+    for (int j = tileY + tileHeight - 1; j >= tileY; j--) {
       // cerr << "\r" << j << " lines remaining." << flush;
-      for (int i = tileX; i < tileX + tilewidth; i++) {
+      for (int i = tileX; i < tileX + tileWidth; i++) {
         color pixel(0, 0, 0);
         for (int s = 0; s < spp; s++) {
-          double u = (double(i) + random_double()) / (imgwidth - 1);
-          double v = (double(j) + random_double()) / (imgheight - 1);
+          double u = (double(i) + random_double()) / (imgWidth - 1);
+          double v = (double(j) + random_double()) / (imgHeight - 1);
           ray r = cam.get_ray(u, v);
           pixel += ray_color(r, world, MAX_DEPTH);
         }
-        // write_color(image, pixel, samples_per_pixel);
 
-        int bufInd = (i + j * imgwidth);
+        int bufInd = (i + j * imgWidth);
         buffer[bufInd] = pixel;
       }
     }
@@ -141,11 +140,10 @@ void raytrace(int* startX, int* startY, int tilewidth, int tileheight,
 
 int main() {
   // Image
-  const auto aspect_ratio = 3.0 / 2.0;
-  const int imgwidth = 1200;
-  const int imgheight = static_cast<int>(imgwidth / aspect_ratio);
-  const int samples_per_pixel = 10;
-  const int max_depth = 50;
+  const auto aspectRatio = 3.0 / 2.0;
+  const int imgWidth = 1200;
+  const int imgHeight = static_cast<int>(imgWidth / aspectRatio);
+  const int samplesPerPixel = 100;
 
   // World
   auto world = random_scene();
@@ -154,13 +152,13 @@ int main() {
   pt3 lookfrom(13, 2, 3);
   pt3 lookat(0, 0, 0);
   vec3 vup(0, 1, 0);
-  auto dist_to_focus = 10.0;
+  auto distToFocus = 10.0;
   auto aperture = 0.1;
 
-  camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus);
+  camera cam(lookfrom, lookat, vup, 20, aspectRatio, aperture, distToFocus);
 
   // Thread Info
-  color* buffer = new color[imgwidth * imgheight];
+  color* buffer = new color[imgWidth * imgHeight];
   int tileWidth = 32;
   int tileHeight = 32;
   int startX = 0;
@@ -171,7 +169,7 @@ int main() {
   std::thread* threads = new std::thread[numThreads];
 
   for (int i = 0; i < numThreads; i++) {
-    threads[i] = thread(raytrace, &startX, &startY, tileWidth, tileHeight, imgwidth, imgheight, samples_per_pixel, world, cam, &tileMutex, buffer);
+    threads[i] = thread(raytrace, &startX, &startY, tileWidth, tileHeight, imgWidth, imgHeight, samplesPerPixel, world, cam, &tileMutex, buffer);
   }
 
   for (int i = 0; i < numThreads; i++) {
@@ -181,16 +179,14 @@ int main() {
   // Render Output
   ofstream image;
   image.open("example.ppm");
-  image << "P3\n" << imgwidth << ' ' << imgheight << "\n255\n";
-  for (int j = imgheight - 1; j >=0; j--) {
+  image << "P3\n" << imgWidth << ' ' << imgHeight << "\n255\n";
+  for (int j = imgHeight - 1; j >=0; j--) {
     cerr << "\r" << j << " lines remaining." << flush;
-    for (int i = 0; i < imgwidth; i++) {
-      color pixel = buffer[i + (j * imgwidth)]; 
-      write_color(image, pixel, samples_per_pixel);
+    for (int i = 0; i < imgWidth; i++) {
+      color pixel = buffer[i + (j * imgWidth)]; 
+      write_color(image, pixel, samplesPerPixel);
     }
   }
 
   cerr << "\nDone." << endl;
 }
-
-// TODO - clean up snake, camel, case structure
