@@ -10,7 +10,7 @@
 #include "raytracer.h"
 #include "sphere.h"
 
-#define MAX_DEPTH 25
+#define MAX_DEPTH 50
 
 color ray_color(const ray& r, const hittable& world, int depth) {
   hit rec;
