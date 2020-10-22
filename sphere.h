@@ -8,14 +8,16 @@ class sphere : public hittable {
  public:
   sphere() {}
   sphere(pt3 cen, double rad, shared_ptr<material> m)
-      : center(cen), radius(rad), mat_ptr(m){};
+      : center(cen), radius(rad), matPtr(m){};
   virtual bool is_hit(const ray& r, double tmin, double tmax,
                       hit& rec) const override;
+  virtual bool bounding_box(double t0, double t1,
+                            aabb& bound_box) const override;
 
  public:
   pt3 center;
   double radius;
-  shared_ptr<material> mat_ptr;
+  shared_ptr<material> matPtr;
 };
 
 bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
@@ -43,7 +45,7 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
       rec.p = r.at(rec.t);
       vec3 normal = (rec.p - center) / radius;
       rec.set_outward_normal(r, normal);
-      rec.mat_ptr = mat_ptr;
+      rec.matPtr = matPtr;
       // cerr << "HIT: object with center " << center << endl;
       return true;
     }
@@ -54,12 +56,18 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
       rec.p = r.at(rec.t);
       vec3 normal = (rec.p - center) / radius;
       rec.set_outward_normal(r, normal);
-      rec.mat_ptr = mat_ptr;
+      rec.matPtr = matPtr;
       // cerr << "HIT: object with center " << center << endl;
       return true;
     }
   }
   return false;
+}
+
+bool sphere::bounding_box(double t0, double t1, aabb& bound_box) const {
+  bound_box = aabb(center - vec3(radius, radius, radius),
+                   center + vec3(radius, radius, radius));
+  return true;
 }
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
+#include "aabb.h"
 #include "raytracer.h"
 #include "ray.h"
 
@@ -22,6 +23,7 @@ struct hit {
 class hittable {
     public:
         virtual bool is_hit(const ray& r, double t_min, double t_max, hit& rec) const = 0;
+        virtual bool bounding_box(double t0, double t1, aabb& bound_box) const = 0;
 };
 
 #endif
