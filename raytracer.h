@@ -26,12 +26,12 @@ inline double random_double() {
     return distribution(generator);
 }
 
-inline int random_int(int min, int max) {
-    return static_cast<int>(random_double(min, max+1));
-}
-
 inline double random_double(double min, double max) {
     return random_double() * (max-min) + min;
+}
+
+inline int random_int(int min, int max) {
+    return static_cast<int>(random_double(min, max+1));
 }
 
 inline double clamp(double x, double min, double max) {
