@@ -10,7 +10,7 @@
 #include "raytracer.h"
 #include "sphere.h"
 
-#define MAX_DEPTH 25
+#define MAX_DEPTH 10
 
 color ray_color(const ray& r, const hittable& world, int depth) {
   hit rec;
@@ -97,6 +97,25 @@ hittable_list test() {
   return world;
 }
 
+hittable_list checker_spheres() {
+    hittable_list objects;
+
+    auto checker = make_shared<checker_texture>(color(0.2, 0.3, 0.1), color(0.9, 0.9, 0.9));
+
+    objects.add(make_shared<sphere>(pt3(0,-10, 0), 10, make_shared<diffuse>(checker)));
+    objects.add(make_shared<sphere>(pt3(0, 10, 0), 10, make_shared<diffuse>(checker)));
+
+    return objects;
+}
+
+hittable_list earth() {
+  auto earth_texture = make_shared<image_texture>("textures/earthmap.jpg");
+  auto earth_surface = make_shared<diffuse>(earth_texture);
+  auto globe = make_shared<sphere>(pt3(0,0,0), 2, earth_surface);
+
+  return hittable_list(globe);
+}
+
 void raytrace(int* startX, int* startY, int tileWidth, int tileHeight,
               int imgWidth, int imgHeight, int spp, hittable_list world,
               camera cam, mutex* tileMutex, color* buffer) {
@@ -143,19 +162,23 @@ int main() {
   const auto aspectRatio = 3.0 / 2.0;
   const int imgWidth = 1200;
   const int imgHeight = static_cast<int>(imgWidth / aspectRatio);
-  const int samplesPerPixel = 100;
+  const int samplesPerPixel = 10;
 
   // World
-  auto world = random_scene();
+  auto world = earth();
 
   // Camera
-  pt3 lookfrom(13, 2, 3);
-  pt3 lookat(0, 0, 0);
+  // pt3 lookfrom(13, 2, 3);
+  // pt3 lookat(0, 0, 0);
   vec3 vup(0, 1, 0);
   auto distToFocus = 10.0;
   auto aperture = 0.1;
 
-  camera cam(lookfrom, lookat, vup, 20, aspectRatio, aperture, distToFocus);
+  pt3 lookfrom = pt3(13,2,3);
+  pt3 lookat = pt3(0,0,0);
+  double vfov = 20.0;
+
+  camera cam(lookfrom, lookat, vup, vfov, aspectRatio, aperture, distToFocus);
 
   // Thread Info
   color* buffer = new color[imgWidth * imgHeight];

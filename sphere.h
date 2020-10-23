@@ -13,12 +13,19 @@ class sphere : public hittable {
                       hit& rec) const override;
   virtual bool bounding_box(double t0, double t1,
                             aabb& bound_box) const override;
-
+  
  public:
   pt3 center;
   double radius;
   shared_ptr<material> matPtr;
 };
+
+void get_sphere_uv(const vec3& p, double& u, double& v) {
+  auto theta = atan2(p.z(), p.x());
+  auto phi = asin(p.y());
+  u = 1-(theta + pi) / (2*pi);
+  v = (phi + pi/2) / pi;
+}
 
 bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
   // GENERAL IDEA:
@@ -45,6 +52,7 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
       rec.p = r.at(rec.t);
       vec3 normal = (rec.p - center) / radius;
       rec.set_outward_normal(r, normal);
+      get_sphere_uv((rec.p-center)/radius, rec.u, rec.v);
       rec.matPtr = matPtr;
       // cerr << "HIT: object with center " << center << endl;
       return true;
@@ -56,6 +64,7 @@ bool sphere::is_hit(const ray& r, double tmin, double tmax, hit& rec) const {
       rec.p = r.at(rec.t);
       vec3 normal = (rec.p - center) / radius;
       rec.set_outward_normal(r, normal);
+      get_sphere_uv((rec.p-center)/radius, rec.u, rec.v);
       rec.matPtr = matPtr;
       // cerr << "HIT: object with center " << center << endl;
       return true;

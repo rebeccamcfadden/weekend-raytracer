@@ -4,6 +4,7 @@
 #include "hittable.h"
 #include "ray.h"
 #include "raytracer.h"
+#include "texture.h"
 
 class material {
  public:
@@ -13,33 +14,36 @@ class material {
 
 class diffuse : public material {
  public:
-  diffuse(const color& a) : albedo(a) {}
+  diffuse(const color& a) : albedo(make_shared<solid_color>(a)) {}
+  diffuse(shared_ptr<texture> a) : albedo(a) {}
 
   virtual bool scatter(const ray& r, const hit& rec, color& attenuation,
                        ray& scattered) const override {
     vec3 scatter_dir = rec.N + random_unit_vector();
     scattered = ray(rec.p, scatter_dir);
-    attenuation = albedo;
+    attenuation = albedo->value(rec.u, rec.v, rec.p);
     return true;
   }
 
  public:
-  color albedo;
+  shared_ptr<texture> albedo;
 };
 
 class metal : public material {
  public:
-  metal(const color& a, double f) : albedo(a), fuzz(f) {}
+  metal(const color& a, double f) : albedo(make_shared<solid_color>(a)), fuzz(f) {}
+  metal(shared_ptr<texture> a, double f) : albedo(a), fuzz(f) {}
+  
   virtual bool scatter(const ray& r, const hit& rec, color& attenuation,
                        ray& scattered) const override {
     vec3 reflected = reflect(unit(r.direction()), rec.N);
     scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
-    attenuation = albedo;
+    attenuation = albedo->value(rec.u, rec.v, rec.p);
     return (scattered.direction().dot(rec.N) > 0);
   }
 
  public:
-  color albedo;
+  shared_ptr<texture> albedo;
   double fuzz;
 };
 

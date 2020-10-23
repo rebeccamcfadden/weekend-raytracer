@@ -12,6 +12,8 @@ struct hit {
     vec3 N;
     shared_ptr<material> matPtr;
     double t;
+    double u;
+    double v;
 
     bool front;
     inline void set_outward_normal(const ray& r, const vec3& normal) {
